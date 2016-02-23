@@ -20,7 +20,7 @@
 
 0. Find the project files
 
-        cd /vagrant
+        cd ~/vagrant
 
 0. Install dependencies
 
