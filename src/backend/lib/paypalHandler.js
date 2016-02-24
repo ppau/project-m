@@ -1,90 +1,75 @@
-'use strict';
+"use strict"
 
-let invoiceService = require('../services/invoiceService');
-var paypalIpn = require('paypal-ipn'),
-    logger = require('./logger');
-const DISABLED = false;
-var env = process.env.NODE_ENV || 'development';
+const invoiceService = require("../services/invoiceService"),
+      paypalIpn = require("paypal-ipn"),
+      logger = require("./logger")
 
-var config = null;
+const env = process.env.NODE_ENV || "development"
+
+let config
+
 try {
-    var configFile = require(__dirname + '/../../../config/paypal-config.json');
-    config = configFile[env];
+  config = require("../../../config/paypal-config.json")[env]
 } catch (e) {
-    console.log('Could not find paypal config file');
+  console.error("Could not find paypal config file")
 }
 
-var getServerUrl = () => {
-    if(config) {
-        return config.paypal_server_url;
-    }
-
-    return undefined;
-};
-
-var getReturnUrl = () => {
-    if(config) {
-        return config.paypal_return_url;
-    }
-
-    return undefined;
-};
-
-var getPaypalEmail = () => {
-    if(config) {
-        return config.paypal_email;
-    }
-
-    return undefined;
-};
-
-var getPaypalHeaders = () => {
-  if(DISABLED){
-    return {
-      'Paypal-Server-Url': undefined,
-      'Paypal-Return-Url': undefined,
-      'Paypal-Email': undefined
-    };
+function getServerUrl() {
+  if (config) {
+    return config.paypal_server_url
   }
+}
+
+function getReturnUrl() {
+  if (config) {
+    return config.paypal_return_url
+  }
+}
+
+function getPaypalEmail() {
+  if (config) {
+    return config.paypal_email
+  }
+}
+
+function getPaypalHeaders() {
   return {
-    'Paypal-Server-Url': getServerUrl(),
-    'Paypal-Return-Url': getReturnUrl(),
-    'Paypal-Email': getPaypalEmail()
-  };
-};
+    "Paypal-Server-Url": getServerUrl(),
+    "Paypal-Return-Url": getReturnUrl(),
+    "Paypal-Email": getPaypalEmail()
+  }
+}
 
-var handleIpn = (req, res) => {
-    if(!getServerUrl()) {
-        res.sendStatus(400);
-        return;
+function handleIpn(req, res) {
+  if (!getServerUrl()) {
+    res.sendStatus(400)
+    return
+  }
+
+  const isSandbox = getServerUrl().indexOf(".sandbox.") !== -1
+
+  paypalIpn.verify(req.body, { allow_sandbox: isSandbox }, (err, mes) => { // eslint-disable-line
+    if (err) {
+      logger.paypalVerifyFailed(err)
+      res.sendStatus(400)
+    } else if (req.body.payment_status === "Completed" && req.body.receiver_email === getPaypalEmail()) {
+      invoiceService.paypalChargeSuccess(req.body.custom, req.body.txn_id)
+      .then(() => {
+        res.sendStatus(200)
+      }).catch(() => {
+        res.sendStatus(400)
+      })
+    } else {
+      logger.invalidPaypalIpnRequest(req.body.custom, req.body.txn_id, req.body.payment_status, req.body.receiver_email)
+      res.sendStatus(400)
     }
-
-    let isSandbox = getServerUrl().indexOf('.sandbox.') !== -1;
-
-    paypalIpn.verify(req.body, {'allow_sandbox': isSandbox}, function callback(err, mes) {
-      if (err) {
-          logger.paypalVerifyFailed(err);
-          res.sendStatus(400);
-      } else {
-          if (req.body.payment_status === 'Completed' && req.body.receiver_email === getPaypalEmail()) {
-              invoiceService.paypalChargeSuccess(req.body.custom, req.body.txn_id)
-              .then( () => {
-                  res.sendStatus(200);
-              }).catch( () => {
-                  res.sendStatus(400);
-              });
-          } else {
-              logger.invalidPaypalIpnRequest(req.body.custom, req.body.txn_id, req.body.payment_status, req.body.receiver_email);
-              res.sendStatus(400);
-          }
-      }
-    });
-};
+  })
+}
 
 module.exports = {
-    handleIpn: handleIpn,
-    getServerUrl: getServerUrl,
-    getReturnUrl: getReturnUrl,
-    getPaypalEmail: getPaypalEmail,
-    getPaypalHeaders: getPaypalHeaders
-};
+  handleIpn,
+  getServerUrl,
+  getReturnUrl,
+  getPaypalEmail,
+  getPaypalHeaders
+}

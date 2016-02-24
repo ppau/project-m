@@ -1,64 +1,66 @@
-'use strict';
-let nodemailer = require('nodemailer');
-var sendmailTransport = require('nodemailer-sendmail-transport');
-let Q = require('q');
-let config = require('config').email;
+"use strict"
 
-let emailConfig = {
+const nodemailer = require("nodemailer"),
+      sendmailTransport = require("nodemailer-sendmail-transport"),
+      config = require("config").email
+
+const emailConfig = {
   path: config.server,
-  args: ['-t']
-};
-
-
-function sendEmail(options) {
-  var transport = nodemailer.createTransport(sendmailTransport(emailConfig));
-  var deferred = Q.defer();
-
-  options.from = options.from || `Pirate Party <${config.membershipEmail}>`;
-
-  transport.sendMail(options, function(error, result){
-      if (error) {
-          deferred.reject(error);
-      } else {
-          deferred.resolve(result);
-      }
-  });
-
-  return deferred.promise;
+  args: ["-t"]
 }
 
-var sendHtmlEmail = function (options) {
-    if (!(options && options.to)) {
-        throw new Error(`Invalid email parameters`);
-    }
+function sendEmail(options) {
+  const transport = nodemailer.createTransport(sendmailTransport(emailConfig))
 
-    let to = options.to instanceof Array ? options.to : [options.to];
+  return new Promise((resolve, reject) => {
+    options.from = options.from || `Pirate Party <${config.membershipEmail}>`
 
-    var emailOptions = {
-        from: options.from,
-        to: to,
-        subject: options.subject,
-        html: options.body
-    };
+    transport.sendMail(options, (error, result) => {
+      if (error) {
+        reject(error)
+      } else {
+        resolve(result)
+      }
+    })
+  })
+}
 
-    return sendEmail(emailOptions);
-};
+function sendHtmlEmail(options) {
+  if (!(options && options.to)) {
+    throw new Error("Invalid email parameters")
+  }
+
+  const to = Array.isArray(options.to) ? options.to : [options.to]
+
+  const emailOptions = {
+    from: options.from,
+    to: to,
+    subject: options.subject,
+    html: options.body
+  }
+
+  return sendEmail(emailOptions)
+}
 
 
-var sendPlainTextEmail = function (options) {
-  let to = options.to instanceof Array ? options.to : [options.to];
+function sendPlainTextEmail(options) {
+  if (!(options && options.to)) {
+    throw new Error("Invalid email parameters")
+  }
 
-  var emailOptions = {
+  const to = Array.isArray(options.to) ? options.to : [options.to]
+
+  const emailOptions = {
     from: options.from,
     to: to,
     subject: options.subject,
     text: options.body
-  };
+  }
 
-  return sendEmail(emailOptions);
-};
+  return sendEmail(emailOptions)
+}
 
 module.exports = {
-  sendHtmlEmail: sendHtmlEmail,
-  sendPlainTextEmail: sendPlainTextEmail
-};
+  sendHtmlEmail,
+  sendPlainTextEmail
+}

@@ -1,61 +1,60 @@
-'use strict';
+"use strict"
 
-const Q = require('q');
+const Q = require("q"),
+      Stripe = require("stripe").Stripe
 
-var env = process.env.NODE_ENV || 'development';
+const env = process.env.NODE_ENV || "development"
 
-var config = null;
+let config
+
 try {
-    var configFile = require(__dirname + '/../config/stripe-config.json');
-    config = configFile[env];
+  config = require("../../../config/paypal-config.json")[env]
 } catch (e) {
-    console.log('Could not find stripe config file');
+  console.log("Could not find stripe config file")
 }
 
-var getSecretKey = () => {
-    let env_secret_key = process.env['STRIPE_SECRET_KEY'];
-    if(env_secret_key) {
-        return env_secret_key;
-    }
+function getSecretKey() {
+  const envSecretKey = process.env.STRIPE_SECRET_KEY
 
-    if(config) {
-        return config.stripe_secret_key;
-    }
+  if (envSecretKey) {
+    return envSecretKey
+  }
 
-    return undefined;
-};
+  if (config) {
+    return config.stripe_secret_key
+  }
+}
 
-var getPublicKey = () => {
-    let env_public_key = process.env['STRIPE_PUBLIC_KEY'];
-    if(env_public_key) {
-        return env_public_key;
-    }
+function getPublicKey() {
+  const envPublicKey = process.env.STRIPE_PUBLIC_KEY
 
-    if(config) {
-        return config.stripe_public_key;
-    }
+  if (envPublicKey) {
+    return envPublicKey
+  }
 
-    return undefined;
-};
+  if (config) {
+    return config.stripe_public_key
+  }
+}
 
-var getStripeHeaders = () => {
-  return {'Stripe-Public-Key': getPublicKey()};
-};
+function getStripeHeaders() {
+  return { "Stripe-Public-Key": getPublicKey() }
+}
 
-var chargeCard = (stripeToken, totalAmount) => {
-    var stripe = require('stripe').Stripe(getSecretKey());
+function chargeCard(stripeToken, totalAmount) {
+  const stripe = Stripe(getSecretKey())
 
-    return Q(stripe.charges.create({
-        amount: parseFloat(totalAmount) * 100,
-        currency: 'aud',
-        source: stripeToken.id,
-        description: 'Pirate party membership.'
-    }));
-};
+  return Q(stripe.charges.create({
+    amount: parseFloat(totalAmount) * 100,
+    currency: "aud",
+    source: stripeToken.id,
+    description: "Pirate party membership."
+  }))
+}
 
 module.exports = {
-    getPublicKey: getPublicKey,
-    getSecretKey: getSecretKey,
-    chargeCard: chargeCard,
-    getStripeHeaders: getStripeHeaders
-};
+  getPublicKey,
+  getSecretKey,
+  chargeCard,
+  getStripeHeaders
+}

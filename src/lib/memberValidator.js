@@ -1,164 +1,170 @@
-'use strict';
-const validator = require('validator');
-const moment = require('moment');
-const _ = require('lodash');
+"use strict"
+const validator = require("validator")
+const moment = require("moment")
+const _ = require("lodash")
+
+const memberFieldsChecks = {
+  firstName: isValidName,
+  lastName: isValidName,
+  gender: isValidGender,
+  email: isValidEmail,
+  primaryPhoneNumber: isValidPhone,
+  secondaryPhoneNumber: isValidOptionalPhone,
+  dateOfBirth: isValidDate
+}
+
+const addressFieldChecks = {
+  address: isValidLength,
+  suburb: isValidLength,
+  postcode: isValidPostcode,
+  state: isValidLength,
+  country: isValidCountry
+}
 
 function isValidVerificationHash(theHash) {
-  return validator.isUUID(theHash, '4');
+  return validator.isUUID(theHash, "4")
 }
 
-var containsSpecialCharacters = (theString) => {
-    return /[\<\>\"\%\;\(\)\&\+]/.test(theString);
-};
+function containsSpecialCharacters(theString) {
+  return /[\<\>\"\%\;\(\)\&\+]/.test(theString)
+}
 
-var isValidString = (theString) => {
-    return !!theString &&
+function isValidString(theString) {
+  return !!theString &&
         !containsSpecialCharacters(theString) &&
-        theString.length < 256;
-};
+        theString.length < 256
+}
 
-var isValidName = (name) => {
-    return isValidString(name);
-};
+function isValidName(name) {
+  return isValidString(name)
+}
 
-var isValidGender = (gender) => {
-    return !gender || isValidString(gender);
-};
+function isValidGender(gender) {
+  return !gender || isValidString(gender)
+}
 
-var isValidEmail = (email) => {
-    return validator.isEmail(email);
-};
+function isValidEmail(email) {
+  return validator.isEmail(email)
+}
 
-var isValidPhoneNumber = (input) => {
-  return /[-+\s()\d]+/.test(input);
-};
+function isValidPhoneNumber(input) {
+  return /[-+\s()\d]+/.test(input)
+}
 
-var isValidPhone = (phone) => {
-    return (!!phone) && isValidPhoneNumber(phone);
-};
+function isValidPhone(phone) {
+  return (!!phone) && isValidPhoneNumber(phone)
+}
 
-var isValidOptionalPhone = (phone) => {
-    return !phone || isValidPhone(phone);
-};
+function isValidOptionalPhone(phone) {
+  return !phone || isValidPhone(phone)
+}
 
-var isValidDate = (date) => {
-    let formattedDate = moment(date, 'DD/MM/YYYY', true);
-    let sixteenYearsAgo = moment().endOf('day').subtract(16, 'years');
-    return formattedDate.isValid() && formattedDate.isSameOrBefore(sixteenYearsAgo);
-};
+function isValidDate(date) {
+  const formattedDate = moment(date, "DD/MM/YYYY", true)
+  const sixteenYearsAgo = moment().endOf("day").subtract(16, "years")
 
-var isValidPostcode = (postcode) => {
-    return !!postcode && /^\d{4}$/.test(postcode);
-};
+  return formattedDate.isValid() && formattedDate.isSameOrBefore(sixteenYearsAgo)
+}
 
-var isValidInternationalPostcode = (postcode) => {
-    return !!postcode && postcode.toString().length <= 16;
-};
+function isValidPostcode(postcode) {
+  return !!postcode && /^\d{4}$/.test(postcode)
+}
+
+function isValidInternationalPostcode(postcode) {
+  return !!postcode && postcode.toString().length <= 16
+}
 
 function setUpPostCodeChecks(addressObj) {
-    if (addressObj && addressObj.country !== 'Australia') {
-        addressFieldChecks.postcode = isValidInternationalPostcode;
-    } else {
-        addressFieldChecks.postcode = isValidPostcode;
-    }
+  // XXX: WHY DOES THIS HAVE SIDE EFFECTS?!!!
+  // TODO: refactor to make a copy, not share a global state.
+  if (addressObj && addressObj.country !== "Australia") {
+    addressFieldChecks.postcode = isValidInternationalPostcode
+  } else {
+    addressFieldChecks.postcode = isValidPostcode
+  }
 }
 
-var isValidResidentialAddress = (addressObj) => {
-    setUpPostCodeChecks(addressObj);
-    var addressErrors =  _.reduce(addressFieldChecks, function(errors, checkFn, memberFieldKey) {
-        if (!addressObj || !checkFn(addressObj[memberFieldKey])){
-            errors.push(memberFieldKey);
-        }
-        return errors;
-    },[]);
+function isValidAddress(addressObj) {
+  setUpPostCodeChecks(addressObj)
 
-    if(addressErrors.length > 0){
-        return _.map(addressErrors, function(error){
-            return 'residential' + _.capitalize(error);
-        });
+  const addressErrors = _.reduce(addressFieldChecks, (errors, checkFn, memberFieldKey) => {
+    if (!addressObj || !checkFn(addressObj[memberFieldKey])) {
+      errors.push(memberFieldKey)
     }
-    return [];
-};
+    return errors
+  }, [])
 
-var isValidPostalAddress = (addressObj) => {
-    setUpPostCodeChecks(addressObj);
-    var addressErrors =  _.reduce(addressFieldChecks, function(errors, checkFn, memberFieldKey) {
-        if (!addressObj || !checkFn(addressObj[memberFieldKey])){
-            errors.push(memberFieldKey);
-        }
-        return errors;
-    },[]);
+  if (addressErrors.length > 0){
+    return _.map(addressErrors, error => {
+      return `residential${_.capitalize(error)}`
+    })
+  }
+  return []
+}
 
-    if(addressErrors.length > 0){
-        return _.map(addressErrors, function(error){
-            return 'postal' + _.capitalize(error);
-        });
+function isValidPostalAddress(addressObj) {
+  setUpPostCodeChecks(addressObj)
+  const addressErrors = _.reduce(addressFieldChecks, (errors, checkFn, memberFieldKey) => {
+    if (!addressObj || !checkFn(addressObj[memberFieldKey])) {
+      errors.push(memberFieldKey)
     }
-    return [];
-};
+    return errors
+  }, [])
 
-var isValidLength = (object, minLength, maxLength) => {
-    minLength = minLength ? minLength : 1;
-    maxLength = maxLength ? maxLength : 255;
-    return !!object && object.length <= maxLength && object.length >= minLength;
-};
+  if (addressErrors.length > 0){
+    return _.map(addressErrors, error => {
+      return `postal${_.capitalize(error)}`
+    })
+  }
+  return []
+}
 
-var isValidCountry = (country) => {
-    return isValidLength(country) && country !== 'Select Country';
-};
+function isValidLength(object, minLength, maxLength) {
+  const max = Math.min(maxLength, 255)
+  const min = Math.max(minLength, 1)
 
-var isValidDetails = (member) => {
-    return _.reduce(memberFieldsChecks, function(errors, checkFn, memberFieldKey) {
-        if (!member || !checkFn(member[memberFieldKey])){
-            errors.push(memberFieldKey);
-        }
-        return errors;
-    },[]);
-};
+  return object &&
+    object.length <= max &&
+    object.length >= min
+}
 
-var isValidMembershipType = (type) => {
-    let validOptions = ['full', 'permanentResident', 'supporter', 'internationalSupporter'];
-    return validOptions.indexOf(type) !== -1;
-};
+function isValidCountry(country) {
+  return isValidLength(country) && country !== "Select Country"
+}
 
-const memberFieldsChecks =
-{
-    firstName: isValidName,
-    lastName: isValidName,
-    gender: isValidGender,
-    email: isValidEmail,
-    primaryPhoneNumber: isValidPhone,
-    secondaryPhoneNumber: isValidOptionalPhone,
-    dateOfBirth:  isValidDate
-};
+function isValidDetails(member) {
+  return _.reduce(memberFieldsChecks, (errors, checkFn, memberFieldKey) => {
+    if (!member || !checkFn(member[memberFieldKey])){
+      errors.push(memberFieldKey)
+    }
+    return errors
+  }, [])
+}
 
-var addressFieldChecks =
-{
-    address: isValidLength,
-    suburb: isValidLength,
-    postcode: isValidPostcode,
-    state: isValidLength,
-    country: isValidCountry
-};
+function isValidMembershipType(type) {
+  const validOptions = ["full", "permanentResident", "supporter", "internationalSupporter"]
 
-var isValid = (member) => {
-    var errors = [
-        isValidDetails(member),
-        isValidResidentialAddress(member && member['residentialAddress']),
-        isValidPostalAddress(member && member['postalAddress'])
-    ];
-    return _.flatten(errors);
+  return validOptions.indexOf(type) !== -1
+}
 
-};
+function isValid(member) {
+  const errors = [
+    isValidDetails(member),
+    isValidAddress(member && member.residentialAddress),
+    isValidPostalAddress(member && member.postalAddress)
+  ]
+
+  return _.flatten(errors)
+}
 
 module.exports = {
-    isValidName: isValidName,
-    isValidGender: isValidGender,
-    isValidEmail: isValidEmail,
-    isValidPhone: isValidPhone,
-    isValidDate: isValidDate,
-    isValid: isValid,
-    isValidAddress: isValidResidentialAddress,
-    isValidMembershipType: isValidMembershipType,
-    isValidVerificationHash: isValidVerificationHash
-};
+  isValidName,
+  isValidGender,
+  isValidEmail,
+  isValidPhone,
+  isValidDate,
+  isValid,
+  isValidAddress,
+  isValidMembershipType,
+  isValidVerificationHash
+}

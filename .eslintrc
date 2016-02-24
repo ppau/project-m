@@ -1,22 +1,14 @@
 {
   "extends": [
     "eslint:recommended",
-    "plugin:react/recommended"
-  ],
-  "plugins": [
-    "react"
   ],
   "parser": "babel-eslint",
   "parserOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module",
-    "ecmaFeatures": {
-      "jsx": true
-    }
+    "ecmaVersion": 6
   },
   "env": {
     "es6": true,
-    "browser": true
+    "node": true
   },
   "rules": {
     "no-extra-parens": [2, "functions"],
@@ -53,6 +45,7 @@
     "no-self-compare": 2,
     "no-sequences": 2,
     "no-throw-literal": 2,
+    "no-unused-vars": 1,
     "no-unused-expressions": [2, { "allowTernary": true }],
     "no-useless-call": 2,
     "no-useless-concat": 2,
@@ -62,7 +55,7 @@
     "radix": 2,
     "vars-on-top": 2,
     "wrap-iife": [2, "outside"],
-    "strict": [2, "global"],
+    "strict": 0, // bugged
     "init-declarations": 0,
     "no-debugger": 1,
     "no-console": 1,
@@ -99,7 +92,7 @@
     "key-spacing": [2, {"beforeColon": false, "afterColon": true}],
     "linebreak-style": [2, "unix"],
     "max-nested-callbacks": [2, 2],
-    "new-cap": [2, {"properties": false}],
+    "new-cap": [1, {"properties": false}],
     "new-parens": 1,
     "newline-after-var": [2, "always"],
     "no-array-constructor": 2,
@@ -120,7 +113,7 @@
     "quote-props": [2, "as-needed"],
     "quotes": [2, "double", "avoid-escape"],
     "semi-spacing": [2, {"before": false, "after": true}],
-    "semi": [2, "always"],
+    "semi": [2, "never"],
     "keyword-spacing": 2,
     "space-before-function-paren": [2, "never"],
     "space-in-parens": [2, "never"],
@@ -137,7 +130,7 @@
     "no-var": 2,
     "object-shorthand": 1,
     "prefer-arrow-callback": 1,
-    "prefer-const": 1,
+    "prefer-const": 2,
     "prefer-spread": 0,
     "prefer-reflect": 0,
     "prefer-template": 1,

@@ -1,104 +1,107 @@
-'use strict';
-var winston = require('winston'),
-    moment = require('moment');
+"use strict"
+const winston = require("winston"),
+      moment = require("moment")
 
 const winstonLogger = new (winston.Logger)({
-    transports: [new (winston.transports.Console)({
-        timestamp: () => {
-            return `[${moment().format()}]`;
-        },
-        formatter: (options) => {
-            return options.timestamp() +' '+ options.level.toUpperCase() +' '+ (undefined !== options.message ? options.message : '') +
-                (options.meta && Object.keys(options.meta).length ? '\n\t'+ JSON.stringify(options.meta) : '' );
-        }
-    })]
-});
+  transports: [
+    new (winston.transports.Console)({
+      timestamp: () => {
+        return `[${moment().format()}]`
+      },
+      formatter: (options) => {
+        const meta = options.meta ? `\n\t${JSON.stringify(options.meta, null, 2)}` : ""
+
+        return `${options.timestamp()} ${options.level.toUpperCase()} ${options.message || ""} ${meta}`
+      }
+    })
+  ]
+})
 
 
-var logError = (error, message) => {
-    winstonLogger.error(message || '', { error: error });
-};
-
-function logInfoEvent(eventId, eventData) {
-  winstonLogger.info(eventId || 'unnamed-event', eventData || {});
+function logError(error, message) {
+  winstonLogger.error(message || "", { error })
 }
 
-var logMemberSignUpEvent = (member) => {
-  logInfoEvent('[member-sign-up-event]', { member: member });
-};
+function logInfoEvent(eventId, eventData) {
+  winstonLogger.info(eventId || "unnamed-event", eventData || {})
+}
 
-var logNewInvoiceEvent = (invoice) => {
-  logInfoEvent('[new-invoice-event]', { invoice: invoice });
-};
+function logMemberSignUpEvent(member) {
+  logInfoEvent("[member-sign-up-event]", { member })
+}
 
-var logUpdateInvoiceEvent = (invoiceId, updatedFields) => {
-  logInfoEvent('[update-invoice-event]', {invoiceId: invoiceId, updatedFields: updatedFields });
-};
+function logNewInvoiceEvent(invoice) {
+  logInfoEvent("[new-invoice-event]", { invoice })
+}
 
-var logCreateEmptyInvoiceEvent = (invoice) => {
-  logInfoEvent('[create-emtpy-invoice-event]', { invoice: invoice.dataValues});
-};
+function logUpdateInvoiceEvent(invoiceId, updatedFields) {
+  logInfoEvent("[update-invoice-event]", { invoiceId, updatedFields })
+}
 
-var logNewChargeEvent = (stripeToken) => {
-  logInfoEvent('[new-charge-event]', { stripeToken: stripeToken });
-};
+function logCreateEmptyInvoiceEvent(invoice) {
+  logInfoEvent("[create-emtpy-invoice-event]", { invoice: invoice.dataValues })
+}
 
-var logNewFailedCharge = (stripeToken, error) => {
-  logInfoEvent('[new-charge-event-failed]', { stripeToken: stripeToken, error: error});
-};
+function logNewChargeEvent(stripeToken) {
+  logInfoEvent("[new-charge-event]", { stripeToken })
+}
 
-let logVerificationEmailSent = function(email) {
-  logInfoEvent('[verification-email-sent]', { email: email });
-};
+function logNewFailedCharge(stripeToken, error) {
+  logInfoEvent("[new-charge-event-failed]", { stripeToken, error })
+}
 
-let logWelcomeEmailSent = function(email) {
-  logInfoEvent('[welcome-email-sent]', { email: email });
-};
+function logVerificationEmailSent(email) {
+  logInfoEvent("[verification-email-sent]", { email })
+}
 
-var logNewPaypalUpdate = (invoiceId, paypalId) => {
-  logInfoEvent('[new-paypal-update]', { invoiceId: invoiceId, paypalId: paypalId});
-};
+function logWelcomeEmailSent(email) {
+  logInfoEvent("[welcome-email-sent]", { email })
+}
 
-var logNewFailedPaypalUpdate = (invoiceId, paypalId) => {
-  logInfoEvent('[paypal-update-failed]', { invoiceId: invoiceId, paypalId: paypalId});
-};
+function logNewPaypalUpdate(invoiceId, paypalId) {
+  logInfoEvent("[new-paypal-update]", { invoiceId, paypalId })
+}
 
-var invalidPaypalIpnRequest = (invoiceId, txnId, paymentStatus, receiverEmail) => {
-  logInfoEvent('[paypal-invalid-ipn-request]', { invoiceId: invoiceId, txnId: txnId, paymentStatus: paymentStatus, receiverEmail: receiverEmail});
-};
+function logNewFailedPaypalUpdate(invoiceId, paypalId) {
+  logInfoEvent("[paypal-update-failed]", { invoiceId, paypalId })
+}
 
-var paypalVerifyFailed = (error) => {
-  logInfoEvent('[paypal-verify-failed]', { error: error });
-};
+function invalidPaypalIpnRequest(invoiceId, txnId, paymentStatus, receiverEmail) {
+  logInfoEvent("[paypal-invalid-ipn-request]", { invoiceId, txnId, paymentStatus, receiverEmail })
+}
 
-var logMemberRenewalEvent = (member) => {
-    logInfoEvent('[membership-renewed]', {member: member});
-};
+function paypalVerifyFailed(error) {
+  logInfoEvent("[paypal-verify-failed]", { error })
+}
 
-var logMemberRenewalEmail = (email) => {
-    logInfoEvent('[renewal-notification-email-sent]', { email: email });
-};
+function logMemberRenewalEvent(member) {
+  logInfoEvent("[membership-renewed]", { member })
+}
 
-var logMemberUpdateDetailsEvent = (member) => {
-    logInfoEvent('[member-details-updated]', {member: member});
-};
+function logMemberRenewalEmail(email) {
+  logInfoEvent("[renewal-notification-email-sent]", { email })
+}
+
+function logMemberUpdateDetailsEvent(member) {
+  logInfoEvent("[member-details-updated]", { member })
+}
 
 module.exports = {
-    logMemberSignUpEvent: logMemberSignUpEvent,
-    logNewInvoiceEvent: logNewInvoiceEvent,
-    logUpdateInvoiceEvent: logUpdateInvoiceEvent,
-    logNewChargeEvent: logNewChargeEvent,
-    logNewFailedCharge: logNewFailedCharge,
-    logCreateEmptyInvoiceEvent: logCreateEmptyInvoiceEvent,
-    logError: logError,
-    logVerificationEmailSent: logVerificationEmailSent,
-    logWelcomeEmailSent: logWelcomeEmailSent,
-    logNewPaypalUpdate: logNewPaypalUpdate,
-    logNewFailedPaypalUpdate: logNewFailedPaypalUpdate,
-    invalidPaypalIpnRequest: invalidPaypalIpnRequest,
-    paypalVerifyFailed: paypalVerifyFailed,
-    logInfoEvent: logInfoEvent,
-    logMemberRenewalEvent: logMemberRenewalEvent,
-    logMemberRenewalEmail: logMemberRenewalEmail,
-    logMemberUpdateDetailsEvent: logMemberUpdateDetailsEvent
-};
+  logMemberSignUpEvent,
+  logNewInvoiceEvent,
+  logUpdateInvoiceEvent,
+  logNewChargeEvent,
+  logNewFailedCharge,
+  logCreateEmptyInvoiceEvent,
+  logError,
+  logVerificationEmailSent,
+  logWelcomeEmailSent,
+  logNewPaypalUpdate,
+  logNewFailedPaypalUpdate,
+  invalidPaypalIpnRequest,
+  paypalVerifyFailed,
+  logInfoEvent,
+  logMemberRenewalEvent,
+  logMemberRenewalEmail,
+  logMemberUpdateDetailsEvent
+}
