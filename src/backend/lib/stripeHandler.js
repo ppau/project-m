@@ -8,7 +8,7 @@ const env = process.env.NODE_ENV || "development"
 let config
 
 try {
-  config = require("../../../config/paypal-config.json")[env]
+  config = require("../../../config/stripe-config.json")[env]
 } catch (e) {
   console.log("Could not find stripe config file")
 }
